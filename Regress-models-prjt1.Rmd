@@ -1,0 +1,113 @@
+---
+title: "Relationship between Transmission Type and Motor Vehicle MPG Efficiency"
+author: "Felix E. Rivera-Mariani, PhD"
+date: "February 2, 2016"
+output: pdf_document
+---
+
+### Summary
+This report evaluates the relationship of transmission type (i.e. automatic or manual) on motor vehicle miles per gallon (MPG) efficiency. The dataset **mtcars** from the R Package **Datasets** was evaluated in this report. Exploratory analysis provided evidence to suggest that there is difference in MPG between automatic and manual transmissions. An unpaired t.test was performed, which rejected the null hypothesis (*p* = 0.001) that the mean MPG between automatic and manual transmissions were equal with a mean MPG difference of 7. After performing a simple linear regression, type of transmissions accounted for 34% in the MPG variability. With multivariate linear regression and An Information Criterion (AIC) stepwise algorithm, it was found that 84% of the MPG variability is explained when  transmission type is confounded with, cylinders, horse power, and  weight of the car: manual transmission yield a 1.8 MPG increase compared to automatic transmission. From this data analysis, we conclude that transmission type does influence MPG, but this effect is further influence by other motor vehicle variables such as the number of cylinders, horse power, and weight. 
+
+### Data Analysis Code
+
+The complete code for this data analysis is available [my github repository](https://github.com/friveramariani/regression-models-prjt1)
+
+### Variables in the dataset
+
+1. mpg: miles per gallon (numerical)
+2. cyl: number of cylinders (factor, 4,6,8)
+3. disp: displacement (cu.in.) (numerical)
+4. hp: gross horsepower (numerical)
+5. drat: rear axle ratio (numerical)
+6. wt: weight (1000 pounds) (numerical)
+7. qsec: 1/4 mile time (numerical)
+8. vs: V/S, V-engine or Straight engine (factor, V,S)
+9. am: transmission type (factor, automatic, manual)
+10. gear: number of forwards gears (factor, 3,4,5)
+11. carb: number of carburetors (factor, 1,2,3,4,5,6,7,8)
+
+### Loading and Processing the Dataset
+```{r}
+data(mtcars)
+```
+
+```{r, results="hide"}
+str(mtcars)
+```
+
+After examining the dimensions of the datasets and the classes of the variables, cyl, vs, am, gear, and carb do not have continuous observations. These variables were then transformed into factor variables. 
+```{r, echo=FALSE}
+library (dplyr)
+mtcars <- rename (mtcars, transm = am)
+##am renamed to transm to better reflect that this columns corresponds to transmissions type
+
+mtcars$transm <- factor(mtcars$transm,labels=c("Automatic","Manual"))
+##the two levels in the transmission column were re-labeled (0 = Automatic, 1 = Manual)
+
+mtcars$cyl <- factor(mtcars$cyl,labels=c("4cyl","6cyl","8cyl"))
+##the three levels in cyl re-labeled (4 = 4cyl, 6 = 6cyl, 8 = 8cyl)
+
+mtcars$vs <- factor(mtcars$vs)
+mtcars$gear <- factor(mtcars$gear,levels=c(3,4,5), labels=c("3gears","4gears","5gears"))
+##the three levels in gear were re-labeled (3 = 3gears, 4 = gears, 5 = 5gears)
+
+mtcars$carb <- factor(mtcars$carb)
+```
+
+###Exploratory analysis
+```{r, echo=FALSE, fig.width=8, fig.height=6}
+boxplot(mpg ~ transm, mtcars, xlab="Transmission", ylab="MPG",
+        main="Comparison of Miles per Gallong (MPG) by Transmission")
+```
+
+From the boxplot above, the median, 25th and 75th quantiles of MPG are higher for manual transmission.
+
+### Inferential analysis
+To evaluate that the means of automatic and manual transmission are not equal, an unpaired t.test was performed.
+```{r, echo=FALSE}
+t.test(mpg ~ transm, mtcars, paired=FALSE)
+```
+From the results of the two-sample t test, we reject (*p* = 0.001) the null hypothesis that the means of automatic and manual transmissions are equal In addition, there is a mean difference of 7 MPG from manual to automatic transmission. 
+
+
+### Strategy for Model Selection
+Because the initial question to answer was *if there is a difference in MPG by type of transmission*, an simple linear regression was performed with mpg as outcome and transmission as predictor.
+```{r}
+fit <- lm (mpg ~ transm, mtcars)
+library(pander)
+pander(summary(fit))
+```
+
+From this simple regression model with a *p* < 0.001, **manual transmissions yields 7.3 MPG higher than automatic** transmission. Nevertheless, the **models explains only 34%** of the regression variance for MPG (adjusted R-squared = 0.3384). This results suggests that other variables influence the MPG variability besides transmission type. As seen in the **paired graph (refer to the Appendix)**, there are other variables that seem to influence MPG variability. 
+
+
+To further evaluate the idea that other variables in addition to transmission type influence MPG, a **An Information Criterion with an Backward Stepwise Algorithm** was performed. The initial model to perform this algorithm was MPG as outcome, and all predictors in the mtcars dataset. 
+```{r, results="hide"}
+full.fit <- lm(mpg ~., mtcars)
+best.fit <- step(full.fit, direction = "backward")
+##results were hidden to limit the report's page length
+```
+
+```{r, echo=FALSE}
+pander(summary(best.fit))
+```
+
+From the AIC-selected model, cylinder (*p* = 0.04 for 6 cylinders), horse power (*p* = 0.03), and weight (*p* < 0.01) influence MPG.  These results suggest that within this data set, cylinders, horse power, and weight of the cars confound the effect of transmission type on MPG. As reported by the adjusted R-squared, this models explains 84% of the regression variance. 
+
+Finally, plots were constructed to evaluate patterns and non-normality of residuals. 
+```{r}
+par(mfrow=c(2,2))
+plot(best.fit)
+```
+
+From the **Residuals vs Fitted** graph, the residuals do not show heteroskedacity as the variance seems to be similar throughout the plot. In addition, from the **quantile plot**, the residuals demonstrate a normal distribution. 
+
+
+### Conclusion
+The purpose of this data analysis report was to evaluate the relationship between transmission type on motor vehicle miles per gallon consumption (MPG). Exploratory analysis provided support to the further evaluate the question *"Is an automatic or manual transmission better for MPG"*. A unpaired t-test provided evidence (*p* = 001) that the mean MPG for automatic and manual transmission were not equal, with manual transmission having on higher mean of **7 MPG (95% CI 3.2 - 11.3)** compared to automatic. Nevertheless, a simple linear regression yielded that transmission type only accounted for **34%** of the regression variability. A multivariate approach was performed with the other variables in the data sets (refer to the section **Variables in the dataset**) to determine if transmission type had confounders. As shown in the section **Strategy for Model Selection**, cylinder, horse power, and weight of the motor vehicle confounded the influence of transmission type on MPG. Therefore, manual transmission does yields a better vehicle gas efficiency **(on average 1.8 MPG)** than automatic but this difference in MPG is also influenced by cylinders, horse power, and weight of the motor vehicle. 
+
+
+### Appendix
+```{r, echo=FALSE}
+pairs(mtcars, panel=panel.smooth, main="Paired Graph of Variables in Motor Car Trends")
+```
