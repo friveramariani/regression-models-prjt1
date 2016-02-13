@@ -10,7 +10,7 @@ This report evaluates the relationship of transmission type (i.e. automatic or m
 
 ### Data Analysis Code
 
-The complete code for this data analysis is available [my github repository](https://github.com/friveramariani/regression-models-prjt1)
+The complete code for this data analysis is available [at my github repository](https://github.com/friveramariani/regression-models-prjt1)
 
 ### Variables in the dataset
 
